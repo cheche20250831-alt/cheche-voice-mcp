@@ -67,7 +67,8 @@ GITHUB_AUDIO_DIR = os.environ.get("GITHUB_AUDIO_DIR", "generated_audio")
 # ============ GitHub 鏡像 ============
 
 async def mirror_to_github(audio_bytes: bytes, text_hint: str) -> str | None:
-    """把 mp3 推到 GitHub public repo,回傳 raw URL(結尾 .mp3)。失敗回 None(不阻塞)。"""
+    """把 mp3 推到 GitHub public repo,回傳 raw URL(結尾 .mp3)。
+    token 未設 → 回 None;PUT 失敗 → raise(把 GitHub 狀態碼往上拋,方便 debug)。"""
     if not GITHUB_TOKEN:
         log.info("GITHUB_TOKEN 未設,跳過鏡像")
         return None
@@ -105,9 +106,12 @@ async def mirror_to_github(audio_bytes: bytes, text_hint: str) -> str | None:
             log.info("mirrored to GitHub: %s", raw_url)
             return raw_url
         log.warning("GitHub mirror failed %s: %s", r.status_code, r.text[:200])
-    except Exception as e:
-        log.warning("GitHub mirror exception: %s", e)
-    return None
+        raise RuntimeError(
+            f"GitHub 鏡像被拒 HTTP {r.status_code} (repo={GITHUB_OWNER}/{GITHUB_REPO}): {r.text[:160]}"
+        )
+    except httpx.HTTPError as e:
+        log.warning("GitHub mirror network error: %s", e)
+        raise RuntimeError(f"GitHub 鏡像連線錯誤: {e}")
 
 
 # ============ MCP server ============
