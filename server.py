@@ -141,13 +141,14 @@ try:
         enable_dns_rebinding_protection=False,
     )
     log.info("DNS rebinding protection: disabled (transport_security)")
-except (ImportError, AttributeError) as e:
-    log.warning("transport_security setup 失敗 (%s),嘗試其他路徑", e)
-    try:
-        mcp.settings.disable_dns_rebinding_protection = True
-        log.info("DNS rebinding protection: disabled (legacy flag)")
-    except AttributeError:
-        log.error("無法關閉 DNS rebinding 防護,服務可能仍會擋 Zeabur 域名")
+except Exception as e:
+    # 2026-07-29:這裡原本是 except (ImportError, AttributeError),底下還有一條
+    # mcp.settings.disable_dns_rebinding_protection = True 的「退路」——
+    # 但那條在嚴格的 pydantic Settings 上會噴 ValueError,而它只接 AttributeError,
+    # 於是例外逃到 import 期 → 容器 crash loop → 對外 502。
+    # 那條退路從一開始就是壞的,只是平常主路徑成功、輪不到它。
+    # 現在降級成純警告:SDK 以後再亂動,最多少關一個防護,不會把整台服務炸掉。
+    log.warning("transport_security setup 失敗 (%s),DNS rebinding 防護未關閉", e)
 
 
 @mcp.tool()
