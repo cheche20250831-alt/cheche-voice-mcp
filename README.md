@@ -1,3 +1,5 @@
+> **2026-10-17：此服務已搬離 Zeabur，改為 Cloudflare Worker 架設（私有程式碼，需 Bearer token）。本倉庫的 Python 版保留作歷史與參考，generated_* 目錄仍持續作為鏡像儲存。**
+
 # cheche-voice-mcp
 
 澈澈的語音模組 —— 一個獨立的 MCP server，提供 `speak` 工具。
